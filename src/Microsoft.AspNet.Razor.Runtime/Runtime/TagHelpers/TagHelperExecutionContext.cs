@@ -135,7 +135,7 @@ namespace Microsoft.AspNet.Razor.Runtime.TagHelpers
         /// <summary>
         /// <see cref="ITagHelper"/>s that should be run.
         /// </summary>
-        public IEnumerable<ITagHelper> TagHelpers
+        public IList<ITagHelper> TagHelpers
         {
             get
             {
@@ -221,15 +221,6 @@ namespace Microsoft.AspNet.Razor.Runtime.TagHelpers
             }
 
             AllAttributes.Add(name, value);
-        }
-
-        /// <summary>
-        /// Executes the child content asynchronously.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> which on completion executes all child content.</returns>
-        public Task ExecuteChildContentAsync()
-        {
-            return _executeChildContentAsync();
         }
 
         /// <summary>

@@ -1,8 +1,6 @@
-#pragma checksum "TagHelpersInSection.cshtml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "b6492c68360b85d4993de94eeac547b7fb012a26"
+#pragma checksum "TagHelpersInSection.cshtml" "{ff1816ec-aa5e-4d10-87f7-6f4963833460}" "f23e7b19a8af7b8fe9c6cb784e5a4bc60537c66b"
 namespace TestOutput
 {
-    using Microsoft.AspNet.Razor.TagHelpers;
-    using Microsoft.AspNet.Razor.Runtime.TagHelpers;
     using System;
     using System.Threading.Tasks;
 
@@ -10,13 +8,13 @@ namespace TestOutput
     {
         #line hidden
         #pragma warning disable 0414
-        private TagHelperContent __tagHelperStringValueBuffer = null;
+        private global::Microsoft.AspNet.Razor.TagHelperContent __tagHelperStringValueBuffer = null;
         #pragma warning restore 0414
-        private TagHelperExecutionContext __tagHelperExecutionContext = null;
-        private TagHelperRunner __tagHelperRunner = null;
-        private TagHelperScopeManager __tagHelperScopeManager = new TagHelperScopeManager();
-        private MyTagHelper __MyTagHelper = null;
-        private NestedTagHelper __NestedTagHelper = null;
+        private global::Microsoft.AspNet.Razor.Runtime.TagHelperExecutionContext __tagHelperExecutionContext = null;
+        private global::Microsoft.AspNet.Razor.Runtime.TagHelperRunner __tagHelperRunner = null;
+        private global::Microsoft.AspNet.Razor.Runtime.TagHelperScopeManager __tagHelperScopeManager = new global::Microsoft.AspNet.Razor.Runtime.TagHelperScopeManager();
+        private global::TestNamespace.MyTagHelper __TestNamespace_MyTagHelper = null;
+        private global::TestNamespace.NestedTagHelper __TestNamespace_NestedTagHelper = null;
         #line hidden
         public TagHelpersInSection()
         {
@@ -25,8 +23,8 @@ namespace TestOutput
         #pragma warning disable 1998
         public override async Task ExecuteAsync()
         {
-            __tagHelperRunner = __tagHelperRunner ?? new TagHelperRunner();
-            Instrumentation.BeginContext(33, 2, true);
+            __tagHelperRunner = __tagHelperRunner ?? new global::Microsoft.AspNet.Razor.Runtime.TagHelperRunner();
+            Instrumentation.BeginContext(31, 2, true);
             WriteLiteral("\r\n");
             Instrumentation.EndContext();
 #line 3 "TagHelpersInSection.cshtml"
@@ -36,22 +34,22 @@ namespace TestOutput
 #line default
 #line hidden
 
-            Instrumentation.BeginContext(71, 2, true);
+            Instrumentation.BeginContext(69, 2, true);
             WriteLiteral("\r\n");
             Instrumentation.EndContext();
             DefineSection("MySection", async(__razor_template_writer) => {
-                Instrumentation.BeginContext(93, 21, true);
+                Instrumentation.BeginContext(91, 21, true);
                 WriteLiteralTo(__razor_template_writer, "\r\n    <div>\r\n        ");
                 Instrumentation.EndContext();
-                __tagHelperExecutionContext = __tagHelperScopeManager.Begin("mytaghelper", TagMode.StartTagAndEndTag, "test", async() => {
-                    Instrumentation.BeginContext(217, 52, true);
+                __tagHelperExecutionContext = __tagHelperScopeManager.Begin("mytaghelper", global::Microsoft.AspNet.Razor.TagHelpers.TagMode.StartTagAndEndTag, "test", async() => {
+                    Instrumentation.BeginContext(215, 52, true);
                     WriteLiteral("\r\n            In None ContentBehavior.\r\n            ");
                     Instrumentation.EndContext();
-                    __tagHelperExecutionContext = __tagHelperScopeManager.Begin("nestedtaghelper", TagMode.StartTagAndEndTag, "test", async() => {
-                        Instrumentation.BeginContext(286, 26, true);
+                    __tagHelperExecutionContext = __tagHelperScopeManager.Begin("nestedtaghelper", global::Microsoft.AspNet.Razor.TagHelpers.TagMode.StartTagAndEndTag, "test", async() => {
+                        Instrumentation.BeginContext(284, 26, true);
                         WriteLiteral("Some buffered values with ");
                         Instrumentation.EndContext();
-                        Instrumentation.BeginContext(313, 4, false);
+                        Instrumentation.BeginContext(311, 4, false);
 #line 11 "TagHelpersInSection.cshtml"
                                                   Write(code);
 
@@ -60,20 +58,24 @@ namespace TestOutput
                         Instrumentation.EndContext();
                     }
                     , StartTagHelperWritingScope, EndTagHelperWritingScope);
-                    __NestedTagHelper = CreateTagHelper<NestedTagHelper>();
-                    __tagHelperExecutionContext.Add(__NestedTagHelper);
+                    __TestNamespace_NestedTagHelper = CreateTagHelper<global::TestNamespace.NestedTagHelper>();
+                    __tagHelperExecutionContext.Add(__TestNamespace_NestedTagHelper);
                     __tagHelperExecutionContext.Output = await __tagHelperRunner.RunAsync(__tagHelperExecutionContext);
-                    Instrumentation.BeginContext(269, 66, false);
-                    await WriteTagHelperAsync(__tagHelperExecutionContext);
+                    if (!__tagHelperExecutionContext.Output.IsContentModified)
+                    {
+                        __tagHelperExecutionContext.Output.Content = await __tagHelperExecutionContext.Output.GetChildContentAsync();
+                    }
+                    Instrumentation.BeginContext(267, 66, false);
+                    Write(__tagHelperExecutionContext.Output);
                     Instrumentation.EndContext();
                     __tagHelperExecutionContext = __tagHelperScopeManager.End();
-                    Instrumentation.BeginContext(335, 10, true);
+                    Instrumentation.BeginContext(333, 10, true);
                     WriteLiteral("\r\n        ");
                     Instrumentation.EndContext();
                 }
                 , StartTagHelperWritingScope, EndTagHelperWritingScope);
-                __MyTagHelper = CreateTagHelper<MyTagHelper>();
-                __tagHelperExecutionContext.Add(__MyTagHelper);
+                __TestNamespace_MyTagHelper = CreateTagHelper<global::TestNamespace.MyTagHelper>();
+                __tagHelperExecutionContext.Add(__TestNamespace_MyTagHelper);
                 StartTagHelperWritingScope();
                 WriteLiteral("Current Time: ");
 #line 9 "TagHelpersInSection.cshtml"
@@ -82,23 +84,27 @@ namespace TestOutput
 #line default
 #line hidden
                 __tagHelperStringValueBuffer = EndTagHelperWritingScope();
-                __MyTagHelper.BoundProperty = __tagHelperStringValueBuffer.GetContent(HtmlEncoder);
-                __tagHelperExecutionContext.AddTagHelperAttribute("boundproperty", __MyTagHelper.BoundProperty);
+                __TestNamespace_MyTagHelper.BoundProperty = __tagHelperStringValueBuffer.GetContent(HtmlEncoder);
+                __tagHelperExecutionContext.AddTagHelperAttribute("boundproperty", __TestNamespace_MyTagHelper.BoundProperty);
                 BeginAddHtmlAttributeValues(__tagHelperExecutionContext, "unboundproperty", 3);
-                AddHtmlAttributeValue("", 188, "Current", 188, 7, true);
-                AddHtmlAttributeValue(" ", 195, "Time:", 196, 6, true);
+                AddHtmlAttributeValue("", 186, "Current", 186, 7, true);
+                AddHtmlAttributeValue(" ", 193, "Time:", 194, 6, true);
 #line 9 "TagHelpersInSection.cshtml"
-AddHtmlAttributeValue(" ", 201, DateTime.Now, 202, 14, false);
+AddHtmlAttributeValue(" ", 199, DateTime.Now, 200, 14, false);
 
 #line default
 #line hidden
                 EndAddHtmlAttributeValues(__tagHelperExecutionContext);
                 __tagHelperExecutionContext.Output = await __tagHelperRunner.RunAsync(__tagHelperExecutionContext);
-                Instrumentation.BeginContext(114, 245, false);
-                await WriteTagHelperToAsync(__razor_template_writer, __tagHelperExecutionContext);
+                if (!__tagHelperExecutionContext.Output.IsContentModified)
+                {
+                    __tagHelperExecutionContext.Output.Content = await __tagHelperExecutionContext.Output.GetChildContentAsync();
+                }
+                Instrumentation.BeginContext(112, 245, false);
+                WriteTo(__razor_template_writer, __tagHelperExecutionContext.Output);
                 Instrumentation.EndContext();
                 __tagHelperExecutionContext = __tagHelperScopeManager.End();
-                Instrumentation.BeginContext(359, 14, true);
+                Instrumentation.BeginContext(357, 14, true);
                 WriteLiteralTo(__razor_template_writer, "\r\n    </div>\r\n");
                 Instrumentation.EndContext();
             }

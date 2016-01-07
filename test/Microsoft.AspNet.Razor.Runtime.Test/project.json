@@ -10,6 +10,7 @@
       "version": "4.0.0-rc1-final",
       "type": "build"
     },
+<<<<<<< HEAD
     "Microsoft.AspNet.Testing": "1.0.0-rc1-final",
     "Microsoft.Extensions.HashCodeCombiner.Sources": {
       "type": "build",
@@ -17,6 +18,11 @@
     },
     "Microsoft.Extensions.WebEncoders.Testing": "1.0.0-rc1-final",
     "xunit.runner.aspnet": "2.0.0-aspnet-rc1-final"
+=======
+    "Microsoft.AspNet.Testing": "1.0.0-*",
+    "Microsoft.Extensions.WebEncoders": "1.0.0-*",
+    "xunit.runner.aspnet": "2.0.0-aspnet-*"
+>>>>>>> refs/remotes/aspnet/dev
   },
   "commands": {
     "test": "xunit.runner.aspnet"
@@ -29,8 +35,15 @@
     },
     "dnxcore50": {
       "dependencies": {
+<<<<<<< HEAD
         "System.Reflection.TypeExtensions": "4.1.0-beta-23516",
         "System.Runtime.Extensions": "4.0.11-beta-23516"
+=======
+        "Microsoft.Extensions.HashCodeCombiner.Sources": {
+          "type": "build",
+          "version": "1.0.0-*"
+        }
+>>>>>>> refs/remotes/aspnet/dev
       }
     }
   }

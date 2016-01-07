@@ -8,8 +8,8 @@ using System.IO;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.Dnx.Compilation;
 using Microsoft.Dnx.Compilation.CSharp;
+using Microsoft.Extensions.CompilationAbstractions;
 using Microsoft.Extensions.PlatformAbstractions;
 
 namespace Microsoft.AspNet.Razor.Runtime.Precompilation
@@ -37,10 +37,7 @@ namespace Microsoft.AspNet.Razor.Runtime.Precompilation
                 syntaxTrees.Add(CSharpSyntaxTree.ParseText(resourceContent));
             }
 
-            var libraryExporter = (ILibraryExporter)CallContextServiceLocator
-                .Locator
-                .ServiceProvider
-                .GetService(typeof(ILibraryExporter));
+            var libraryExporter = CompilationServices.Default.LibraryExporter;
             var applicationName = ExecutingAssembly.GetName().Name;
             var libraryExport = libraryExporter.GetExport(applicationName);
 

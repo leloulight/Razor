@@ -10,17 +10,11 @@ namespace TestOutput
         {
             #pragma warning disable 219
             string __tagHelperDirectiveSyntaxHelper = null;
-            __tagHelperDirectiveSyntaxHelper = 
-#line 1 "TransitionsInTagHelperAttributes.cshtml"
-              "something, nice"
-
-#line default
-#line hidden
-            ;
+            __tagHelperDirectiveSyntaxHelper = "something, nice";
             #pragma warning restore 219
         }
         #line hidden
-        private PTagHelper __PTagHelper = null;
+        private global::TestNamespace.PTagHelper __TestNamespace_PTagHelper = null;
         #line hidden
         public TransitionsInTagHelperAttributes()
         {
@@ -37,49 +31,49 @@ namespace TestOutput
 #line default
 #line hidden
 
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 7 "TransitionsInTagHelperAttributes.cshtml"
-    __PTagHelper.Age = 1337;
+__TestNamespace_PTagHelper.Age = 1337;
 
 #line default
 #line hidden
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 8 "TransitionsInTagHelperAttributes.cshtml"
       __o = @class;
 
 #line default
 #line hidden
 #line 8 "TransitionsInTagHelperAttributes.cshtml"
-       __PTagHelper.Age = 42;
+__TestNamespace_PTagHelper.Age = 42;
 
 #line default
 #line hidden
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 9 "TransitionsInTagHelperAttributes.cshtml"
-  __PTagHelper.Age = 42 + @int;
+__TestNamespace_PTagHelper.Age = 42 + @int;
 
 #line default
 #line hidden
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 10 "TransitionsInTagHelperAttributes.cshtml"
-  __PTagHelper.Age = int;
+__TestNamespace_PTagHelper.Age = int;
 
 #line default
 #line hidden
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 11 "TransitionsInTagHelperAttributes.cshtml"
-  __PTagHelper.Age = (@int);
+__TestNamespace_PTagHelper.Age = (@int);
 
 #line default
 #line hidden
-            __PTagHelper = CreateTagHelper<PTagHelper>();
+            __TestNamespace_PTagHelper = CreateTagHelper<global::TestNamespace.PTagHelper>();
 #line 12 "TransitionsInTagHelperAttributes.cshtml"
              __o = @class;
 
 #line default
 #line hidden
 #line 12 "TransitionsInTagHelperAttributes.cshtml"
-              __PTagHelper.Age = 4 * @(@int + 2);
+__TestNamespace_PTagHelper.Age = 4 * @(@int + 2);
 
 #line default
 #line hidden

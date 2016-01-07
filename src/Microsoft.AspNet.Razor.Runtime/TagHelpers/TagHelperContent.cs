@@ -3,8 +3,8 @@
 
 using System;
 using System.IO;
-using Microsoft.AspNet.Html.Abstractions;
-using Microsoft.Extensions.WebEncoders;
+using System.Text.Encodings.Web;
+using Microsoft.AspNet.Html;
 
 namespace Microsoft.AspNet.Razor.TagHelpers
 {
@@ -14,7 +14,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
     public abstract class TagHelperContent : IHtmlContentBuilder
     {
         /// <summary>
-        /// Gets a value indicating whether the content was modifed.
+        /// Gets a value indicating whether the content was modified.
         /// </summary>
         public abstract bool IsModified { get; }
 
@@ -79,7 +79,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         /// </summary>
         /// <param name="htmlContent">The <see cref="IHtmlContent"/> to be appended.</param>
         /// <returns>A reference to this instance after the append operation has completed.</returns>
-        public abstract TagHelperContent Append(IHtmlContent htmlContent);
+        public abstract TagHelperContent AppendHtml(IHtmlContent htmlContent);
 
         /// <summary>
         /// Appends <paramref name="encoded"/> to the existing content. <paramref name="encoded"/> is assumed
@@ -137,17 +137,17 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         /// <summary>
         /// Gets the content.
         /// </summary>
-        /// <param name="encoder">The <see cref="IHtmlEncoder"/>.</param>
+        /// <param name="encoder">The <see cref="HtmlEncoder"/>.</param>
         /// <returns>A <see cref="string"/> containing the content.</returns>
-        public abstract string GetContent(IHtmlEncoder encoder);
+        public abstract string GetContent(HtmlEncoder encoder);
 
         /// <inheritdoc />
-        public abstract void WriteTo(TextWriter writer, IHtmlEncoder encoder);
+        public abstract void WriteTo(TextWriter writer, HtmlEncoder encoder);
 
         /// <inheritdoc />
-        IHtmlContentBuilder IHtmlContentBuilder.Append(IHtmlContent content)
+        IHtmlContentBuilder IHtmlContentBuilder.AppendHtml(IHtmlContent content)
         {
-            return Append(content);
+            return AppendHtml(content);
         }
 
         /// <inheritdoc />

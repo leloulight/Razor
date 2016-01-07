@@ -11,21 +11,18 @@ namespace Microsoft.AspNet.Razor.Chunks.Generators
     /// </summary>
     public class TagHelperPrefixDirectiveChunkGenerator : SpanChunkGenerator
     {
+        private readonly string _prefix;
+
         /// <summary>
-        /// Instantiates a new <see cref="TagHelperPrefixDirectiveChunkGenerator"/>.
+        /// Initializes a new instance of <see cref="TagHelperPrefixDirectiveChunkGenerator"/>.
         /// </summary>
         /// <param name="prefix">
         /// Text used as a required prefix when matching HTML.
         /// </param>
         public TagHelperPrefixDirectiveChunkGenerator(string prefix)
         {
-            Prefix = prefix;
+            _prefix = prefix;
         }
-
-        /// <summary>
-        /// Text used as a required prefix when matching HTML.
-        /// </summary>
-        public string Prefix { get; }
 
         /// <summary>
         /// Generates <see cref="TagHelperPrefixDirectiveChunk"/>s.
@@ -37,7 +34,7 @@ namespace Microsoft.AspNet.Razor.Chunks.Generators
         /// the current chunk generation process.</param>
         public override void GenerateChunk(Span target, ChunkGeneratorContext context)
         {
-            context.ChunkTreeBuilder.AddTagHelperPrefixDirectiveChunk(Prefix, target);
+            context.ChunkTreeBuilder.AddTagHelperPrefixDirectiveChunk(_prefix, target);
         }
     }
 }

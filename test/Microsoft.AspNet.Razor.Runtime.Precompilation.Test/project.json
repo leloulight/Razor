@@ -8,6 +8,7 @@
     "Microsoft.AspNet.Razor.Runtime.Precompilation.Files": "1.0.0-*",
     "Microsoft.AspNet.Razor.Runtime.Test": "1.0.0-*",
     "Microsoft.AspNet.Razor.Test.Sources": {
+<<<<<<< HEAD
       "version": "4.0.0-rc1-final",
       "type": "build"
     },
@@ -15,6 +16,15 @@
     "Microsoft.Extensions.HashCodeCombiner.Sources": {
       "type": "build",
       "version": "1.0.0-rc1-final"
+=======
+      "version": "4.0.0-*",
+      "type": "build"
+    },
+    "Microsoft.Dnx.Compilation.CSharp.Common": "1.0.0-*",
+    "Microsoft.Extensions.HashCodeCombiner.Sources": {
+      "type": "build",
+      "version": "1.0.0-*"
+>>>>>>> refs/remotes/aspnet/dev
     }
   },
   "resource": [
@@ -29,11 +39,18 @@
     "dnx451": {
       "frameworkAssemblies": {
         "System.Text.Encoding": ""
+<<<<<<< HEAD
       },
       "dependencies": {
         "Moq": "4.2.1312.1622"
+=======
+>>>>>>> refs/remotes/aspnet/dev
       }
     },
     "dnxcore50": {}
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> refs/remotes/aspnet/dev

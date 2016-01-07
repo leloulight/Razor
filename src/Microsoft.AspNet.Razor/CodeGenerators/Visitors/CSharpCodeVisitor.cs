@@ -15,6 +15,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
         private const string ItemParameterName = "item";
         private const string ValueWriterName = "__razor_attribute_value_writer";
         private const string TemplateWriterName = "__razor_template_writer";
+        private const int MaxStringLiteralLength = 1024;
 
         private CSharpPaddingBuilder _paddingBuilder;
         private CSharpTagHelperCodeRenderer _tagHelperCodeRenderer;
@@ -116,6 +117,32 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
             Writer.WriteEndMethodInvocation(false).WriteLine();
         }
 
+        protected override void Visit(ParentLiteralChunk chunk)
+        {
+            Debug.Assert(chunk.Children.Count > 1);
+
+            if (Context.Host.DesignTimeMode)
+            {
+                // Skip generating the chunk if we're in design time or if the chunk is empty.
+                return;
+            }
+
+            var text = chunk.GetText();
+
+            if (Context.Host.EnableInstrumentation)
+            {
+                var start = chunk.Start.AbsoluteIndex;
+                Writer.WriteStartInstrumentationContext(Context, start, text.Length, isLiteral: true);
+            }
+
+            RenderStartWriteLiteral(text);
+
+            if (Context.Host.EnableInstrumentation)
+            {
+                Writer.WriteEndInstrumentationContext(Context);
+            }
+        }
+
         protected override void Visit(LiteralChunk chunk)
         {
             if (Context.Host.DesignTimeMode || string.IsNullOrEmpty(chunk.Text))
@@ -129,17 +156,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                 Writer.WriteStartInstrumentationContext(Context, chunk.Association, isLiteral: true);
             }
 
-            if (Context.ExpressionRenderingMode == ExpressionRenderingMode.WriteToOutput)
-            {
-                RenderPreWriteStart();
-            }
-
-            Writer.WriteStringLiteral(chunk.Text);
-
-            if (Context.ExpressionRenderingMode == ExpressionRenderingMode.WriteToOutput)
-            {
-                Writer.WriteEndMethodInvocation();
-            }
+            RenderStartWriteLiteral(chunk.Text);
 
             if (Context.Host.EnableInstrumentation)
             {
@@ -220,9 +237,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
 
                 Writer
                     .WriteParameterSeparator()
-                    .Write(chunk.Start.AbsoluteIndex.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Start.AbsoluteIndex.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
-                    .Write(chunk.Association.Length.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Association.Length.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
                     .WriteBooleanLiteral(value: false)
                     .WriteEndMethodInvocation();
@@ -236,7 +253,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                     .WriteParameterSeparator()
                     .WriteStartNewObject(Context.Host.GeneratedClassContext.TemplateTypeName);
 
-                using (Writer.BuildLambda(endLine: false, parameterNames: ValueWriterName))
+                using (Writer.BuildAsyncLambda(endLine: false, parameterNames: ValueWriterName))
                 {
                     Accept(chunk.Children);
                 }
@@ -244,9 +261,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                 Writer
                     .WriteEndMethodInvocation(false)
                     .WriteParameterSeparator()
-                    .Write(chunk.Start.AbsoluteIndex.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Start.AbsoluteIndex.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
-                    .Write(chunk.Association.Length.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Association.Length.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
                     .WriteBooleanLiteral(false)
                     .WriteEndMethodInvocation();
@@ -297,9 +314,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
 
                 Writer
                     .WriteParameterSeparator()
-                    .Write(chunk.ValueLocation.AbsoluteIndex.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.ValueLocation.AbsoluteIndex.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
-                    .Write(chunk.Association.Length.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Association.Length.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
                     .WriteBooleanLiteral(false)
                     .WriteEndMethodInvocation();
@@ -309,7 +326,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                 Writer
                     .WriteLocationTaggedString(chunk.Value)
                     .WriteParameterSeparator()
-                    .Write(chunk.Association.Length.ToString(CultureInfo.CurrentCulture))
+                    .Write(chunk.Association.Length.ToString(CultureInfo.InvariantCulture))
                     .WriteParameterSeparator()
                     .WriteBooleanLiteral(true)
                     .WriteEndMethodInvocation();
@@ -345,7 +362,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                    .WriteParameterSeparator()
                    .WriteLocationTaggedString(chunk.Suffix)
                    .WriteParameterSeparator()
-                   .Write(attributeCount.ToString(CultureInfo.CurrentCulture))
+                   .Write(attributeCount.ToString(CultureInfo.InvariantCulture))
                    .WriteEndMethodInvocation();
 
             Accept(chunk.Children);
@@ -539,25 +556,47 @@ namespace Microsoft.AspNet.Razor.CodeGenerators.Visitors
                    Context.ExpressionRenderingMode == ExpressionRenderingMode.WriteToOutput;
         }
 
-        private CSharpCodeWriter RenderPreWriteStart()
+        private void RenderStartWriteLiteral(string text)
         {
-            return RenderPreWriteStart(Writer, Context);
-        }
+            var charactersRendered = 0;
 
-        public static CSharpCodeWriter RenderPreWriteStart(CSharpCodeWriter writer, CodeGeneratorContext context)
-        {
-            if (!string.IsNullOrEmpty(context.TargetWriterName))
+            // Render the string in pieces to avoid Roslyn OOM exceptions at compile time:
+            // https://github.com/aspnet/External/issues/54
+            while (charactersRendered < text.Length)
             {
-                writer.WriteStartMethodInvocation(context.Host.GeneratedClassContext.WriteLiteralToMethodName)
-                      .Write(context.TargetWriterName)
-                      .WriteParameterSeparator();
-            }
-            else
-            {
-                writer.WriteStartMethodInvocation(context.Host.GeneratedClassContext.WriteLiteralMethodName);
-            }
+                if (Context.ExpressionRenderingMode == ExpressionRenderingMode.WriteToOutput)
+                {
+                    if (!string.IsNullOrEmpty(Context.TargetWriterName))
+                    {
+                        Writer.WriteStartMethodInvocation(Context.Host.GeneratedClassContext.WriteLiteralToMethodName)
+                              .Write(Context.TargetWriterName)
+                              .WriteParameterSeparator();
+                    }
+                    else
+                    {
+                        Writer.WriteStartMethodInvocation(Context.Host.GeneratedClassContext.WriteLiteralMethodName);
+                    }
+                }
 
-            return writer;
+                string textToRender;
+                if (text.Length <= MaxStringLiteralLength)
+                {
+                    textToRender = text;
+                }
+                else
+                {
+                    var charactersToSubstring = Math.Min(MaxStringLiteralLength, text.Length - charactersRendered);
+                    textToRender = text.Substring(charactersRendered, charactersToSubstring);
+                }
+
+                Writer.WriteStringLiteral(textToRender);
+                charactersRendered += textToRender.Length;
+
+                if (Context.ExpressionRenderingMode == ExpressionRenderingMode.WriteToOutput)
+                {
+                    Writer.WriteEndMethodInvocation();
+                }
+            }
         }
     }
 }

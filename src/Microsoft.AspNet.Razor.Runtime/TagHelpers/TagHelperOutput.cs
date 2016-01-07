@@ -2,16 +2,25 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.IO;
+using System.Text.Encodings.Web;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Html;
 
 namespace Microsoft.AspNet.Razor.TagHelpers
 {
     /// <summary>
     /// Class used to represent the output of an <see cref="ITagHelper"/>.
     /// </summary>
-    public class TagHelperOutput
+    public class TagHelperOutput : IHtmlContent
     {
         private readonly Func<bool, Task<TagHelperContent>> _getChildContentAsync;
+        private TagHelperContent _preElement;
+        private TagHelperContent _preContent;
+        private TagHelperContent _content;
+        private TagHelperContent _postContent;
+        private TagHelperContent _postElement;
+        private bool _wasSuppressOutputCalled;
 
         // Internal for testing
         internal TagHelperOutput(string tagName)
@@ -45,7 +54,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
             }
 
             TagName = tagName;
-            Attributes = new TagHelperAttributeList(attributes);
+            Attributes = attributes;
             _getChildContentAsync = getChildContentAsync;
         }
 
@@ -61,32 +70,96 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         /// Content that precedes the HTML element.
         /// </summary>
         /// <remarks>Value is rendered before the HTML element.</remarks>
-        public TagHelperContent PreElement { get; } = new DefaultTagHelperContent();
+        public TagHelperContent PreElement
+        {
+            get
+            {
+                if (_preElement == null)
+                {
+                    _preElement = new DefaultTagHelperContent();
+                }
+
+                return _preElement;
+            }
+        }
 
         /// <summary>
         /// The HTML element's pre content.
         /// </summary>
         /// <remarks>Value is prepended to the <see cref="ITagHelper"/>'s final output.</remarks>
-        public TagHelperContent PreContent { get; } = new DefaultTagHelperContent();
+        public TagHelperContent PreContent
+        {
+            get
+            {
+                if (_preContent == null)
+                {
+                    _preContent = new DefaultTagHelperContent();
+                }
+
+                return _preContent;
+            }
+        }
 
         /// <summary>
-        /// The HTML element's main content.
+        /// Get or set the HTML element's main content.
         /// </summary>
         /// <remarks>Value occurs in the <see cref="ITagHelper"/>'s final output after <see cref="PreContent"/> and
         /// before <see cref="PostContent"/></remarks>
-        public TagHelperContent Content { get; } = new DefaultTagHelperContent();
+        public TagHelperContent Content
+        {
+            get
+            {
+                if (_content == null)
+                {
+                    _content = new DefaultTagHelperContent();
+                }
+
+                return _content;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                _content = value;
+            }
+        }
 
         /// <summary>
         /// The HTML element's post content.
         /// </summary>
         /// <remarks>Value is appended to the <see cref="ITagHelper"/>'s final output.</remarks>
-        public TagHelperContent PostContent { get; } = new DefaultTagHelperContent();
+        public TagHelperContent PostContent
+        {
+            get
+            {
+                if (_postContent == null)
+                {
+                    _postContent = new DefaultTagHelperContent();
+                }
+
+                return _postContent;
+            }
+        }
 
         /// <summary>
         /// Content that follows the HTML element.
         /// </summary>
         /// <remarks>Value is rendered after the HTML element.</remarks>
-        public TagHelperContent PostElement { get; } = new DefaultTagHelperContent();
+        public TagHelperContent PostElement
+        {
+            get
+            {
+                if (_postElement == null)
+                {
+                    _postElement = new DefaultTagHelperContent();
+                }
+
+                return _postElement;
+            }
+        }
 
         /// <summary>
         /// <c>true</c> if <see cref="Content"/> has been set, <c>false</c> otherwise.
@@ -95,7 +168,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         {
             get
             {
-                return Content.IsModified;
+                return _wasSuppressOutputCalled || _content?.IsModified == true;
             }
         }
 
@@ -124,11 +197,12 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         public void SuppressOutput()
         {
             TagName = null;
-            PreElement.Clear();
-            PreContent.Clear();
-            Content.Clear();
-            PostContent.Clear();
-            PostElement.Clear();
+            _wasSuppressOutputCalled = true;
+            _preElement?.Clear();
+            _preContent?.Clear();
+            _content?.Clear();
+            _postContent?.Clear();
+            _postElement?.Clear();
         }
 
         /// <summary>
@@ -150,6 +224,88 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         public Task<TagHelperContent> GetChildContentAsync(bool useCachedResult)
         {
             return _getChildContentAsync(useCachedResult);
+        }
+
+        /// <inheritdoc />
+        public void WriteTo(TextWriter writer, HtmlEncoder encoder)
+        {
+            if (writer == null)
+            {
+                throw new ArgumentNullException(nameof(writer));
+            }
+
+            _preElement?.WriteTo(writer, encoder);
+
+            var isTagNameNullOrWhitespace = string.IsNullOrWhiteSpace(TagName);
+
+            if (!isTagNameNullOrWhitespace)
+            {
+                writer.Write('<');
+                writer.Write(TagName);
+
+                // Perf: Avoid allocating enumerator
+                for (var i = 0; i < Attributes.Count; i++)
+                {
+                    var attribute = Attributes[i];
+                    writer.Write(' ');
+                    writer.Write(attribute.Name);
+
+                    if (attribute.Minimized)
+                    {
+                        continue;
+                    }
+
+                    writer.Write("=\"");
+                    var value = attribute.Value;
+                    var htmlContent = value as IHtmlContent;
+                    if (htmlContent != null)
+                    {
+                        // There's no way of tracking the attribute value quotations in the Razor source. Therefore, we
+                        // must escape any IHtmlContent double quote values in the case that a user wrote:
+                        // <p name='A " is valid in single quotes'></p>
+                        using (var stringWriter = new StringWriter())
+                        {
+                            htmlContent.WriteTo(stringWriter, encoder);
+
+                            var stringValue = stringWriter.ToString();
+                            stringValue = stringValue.Replace("\"", "&quot;");
+
+                            writer.Write(stringValue);
+                        }
+                    }
+                    else if (value != null)
+                    {
+                        encoder.Encode(writer, value.ToString());
+                    }
+
+                    writer.Write('"');
+                }
+
+                if (TagMode == TagMode.SelfClosing)
+                {
+                    writer.Write(" /");
+                }
+
+                writer.Write('>');
+            }
+
+            if (isTagNameNullOrWhitespace || TagMode == TagMode.StartTagAndEndTag)
+            {
+                _preContent?.WriteTo(writer, encoder);
+
+                _content?.WriteTo(writer, encoder);
+
+                _postContent?.WriteTo(writer, encoder);
+            }
+
+            if (!isTagNameNullOrWhitespace && TagMode == TagMode.StartTagAndEndTag)
+            {
+                writer.Write("</");
+                writer.Write(TagName);
+                writer.Write(">");
+            }
+
+            _postElement?.WriteTo(writer, encoder);
         }
     }
 }

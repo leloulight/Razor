@@ -1303,22 +1303,6 @@ namespace Microsoft.AspNet.Razor
         }
 
         /// <summary>
-        /// Directive '{0}'s value must be surrounded in double quotes.
-        /// </summary>
-        internal static string ParseError_DirectiveMustBeSurroundedByQuotes
-        {
-            get { return GetString("ParseError_DirectiveMustBeSurroundedByQuotes"); }
-        }
-
-        /// <summary>
-        /// Directive '{0}'s value must be surrounded in double quotes.
-        /// </summary>
-        internal static string FormatParseError_DirectiveMustBeSurroundedByQuotes(object p0)
-        {
-            return string.Format(CultureInfo.CurrentCulture, GetString("ParseError_DirectiveMustBeSurroundedByQuotes"), p0);
-        }
-
-        /// <summary>
         /// Found a malformed '{0}' tag helper. Tag helpers must have a start and end tag or be self closing.
         /// </summary>
         internal static string TagHelpersParseTreeRewriter_FoundMalformedTagHelper
@@ -1560,6 +1544,22 @@ namespace Microsoft.AspNet.Razor
         internal static string FormatParseError_HelperDirectiveNotAvailable(object p0)
         {
             return string.Format(CultureInfo.CurrentCulture, GetString("ParseError_HelperDirectiveNotAvailable"), p0);
+        }
+
+        /// <summary>
+        /// Optional quote around the directive '{0}' is missing the corresponding opening or closing quote.
+        /// </summary>
+        internal static string ParseError_IncompleteQuotesAroundDirective
+        {
+            get { return GetString("ParseError_IncompleteQuotesAroundDirective"); }
+        }
+
+        /// <summary>
+        /// Optional quote around the directive '{0}' is missing the corresponding opening or closing quote.
+        /// </summary>
+        internal static string FormatParseError_IncompleteQuotesAroundDirective(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("ParseError_IncompleteQuotesAroundDirective"), p0);
         }
 
         private static string GetString(string name, params string[] formatterNames)

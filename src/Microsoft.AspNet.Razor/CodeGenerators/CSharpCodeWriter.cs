@@ -108,7 +108,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
         {
             WriteStringLiteral(value.Value);
             WriteParameterSeparator();
-            Write(value.Location.AbsoluteIndex.ToString(CultureInfo.CurrentCulture));
+            Write(value.Location.AbsoluteIndex.ToString(CultureInfo.InvariantCulture));
 
             return this;
         }
@@ -144,7 +144,8 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
 
         public CSharpCodeWriter WriteUsing(string name, bool endLine)
         {
-            Write(string.Format("using {0}", name));
+            Write("using ");
+            Write(name);
 
             if (endLine)
             {
@@ -225,6 +226,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
         {
             return WriteEndMethodInvocation(endLine: true);
         }
+
         public CSharpCodeWriter WriteEndMethodInvocation(bool endLine)
         {
             Write(")");
@@ -300,7 +302,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
 
         public CSharpCodeWriter WriteMethodInvocation(string methodName, bool endLine, params string[] parameters)
         {
-            return WriteStartMethodInvocation(methodName).Write(string.Join(", ", parameters)).WriteEndMethodInvocation(endLine);
+            return WriteStartMethodInvocation(methodName)
+                .Write(string.Join(", ", parameters))
+                .WriteEndMethodInvocation(endLine);
         }
 
         public CSharpDisableWarningScope BuildDisableWarningScope(int warning)
@@ -363,7 +367,10 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             return BuildClassDeclaration(accessibility, name, new string[] { baseType });
         }
 
-        public CSharpCodeWritingScope BuildClassDeclaration(string accessibility, string name, IEnumerable<string> baseTypes)
+        public CSharpCodeWritingScope BuildClassDeclaration(
+            string accessibility,
+            string name,
+            IEnumerable<string> baseTypes)
         {
             Write(accessibility).Write(" class ").Write(name);
 
@@ -388,9 +395,17 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             return BuildConstructor(accessibility, name, Enumerable.Empty<KeyValuePair<string, string>>());
         }
 
-        public CSharpCodeWritingScope BuildConstructor(string accessibility, string name, IEnumerable<KeyValuePair<string, string>> parameters)
+        public CSharpCodeWritingScope BuildConstructor(
+            string accessibility,
+            string name,
+            IEnumerable<KeyValuePair<string, string>> parameters)
         {
-            Write(accessibility).Write(" ").Write(name).Write("(").Write(string.Join(", ", parameters.Select(p => p.Key + " " + p.Value))).WriteLine(")");
+            Write(accessibility)
+                .Write(" ")
+                .Write(name)
+                .Write("(")
+                .Write(string.Join(", ", parameters.Select(p => p.Key + " " + p.Value)))
+                .WriteLine(")");
 
             return new CSharpCodeWritingScope(this);
         }
@@ -400,15 +415,28 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             return BuildMethodDeclaration(accessibility, returnType, name, Enumerable.Empty<KeyValuePair<string, string>>());
         }
 
-        public CSharpCodeWritingScope BuildMethodDeclaration(string accessibility, string returnType, string name, IEnumerable<KeyValuePair<string, string>> parameters)
+        public CSharpCodeWritingScope BuildMethodDeclaration(
+            string accessibility,
+            string returnType,
+            string name,
+            IEnumerable<KeyValuePair<string, string>> parameters)
         {
-            Write(accessibility).Write(" ").Write(returnType).Write(" ").Write(name).Write("(").Write(string.Join(", ", parameters.Select(p => p.Key + " " + p.Value))).WriteLine(")");
+            Write(accessibility)
+                .Write(" ")
+                .Write(returnType)
+                .Write(" ")
+                .Write(name)
+                .Write("(")
+                .Write(string.Join(", ", parameters.Select(p => p.Key + " " + p.Value)))
+                .WriteLine(")");
 
             return new CSharpCodeWritingScope(this);
         }
 
-        // TODO: Do I need to look at the document content to determine its mapping length?
-        public CSharpLineMappingWriter BuildLineMapping(SourceLocation documentLocation, int contentLength, string sourceFilename)
+        public CSharpLineMappingWriter BuildLineMapping(
+            SourceLocation documentLocation,
+            int contentLength,
+            string sourceFilename)
         {
             return new CSharpLineMappingWriter(this, documentLocation, contentLength, sourceFilename);
         }
@@ -470,23 +498,6 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                         Write(literal[i].ToString());
                         break;
                 }
-                if (i > 0 && i % 80 == 0)
-                {
-                    // If current character is a high surrogate and the following
-                    // character is a low surrogate, don't break them.
-                    // Otherwise when we write the string to a file, we might lose
-                    // the characters.
-                    if (Char.IsHighSurrogate(literal[i])
-                        && (i < literal.Length - 1)
-                        && Char.IsLowSurrogate(literal[i + 1]))
-                    {
-                        Write(literal[++i].ToString());
-                    }
-
-                    Write("\" +");
-                    Write(NewLine);
-                    Write("\"");
-                }
             }
             Write("\"");
         }
@@ -496,10 +507,23 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             SyntaxTreeNode syntaxNode,
             bool isLiteral)
         {
+            return WriteStartInstrumentationContext(
+                context,
+                syntaxNode.Start.AbsoluteIndex,
+                syntaxNode.Length,
+                isLiteral);
+        }
+
+        public CSharpCodeWriter WriteStartInstrumentationContext(
+            ChunkGeneratorContext context,
+            int absoluteIndex,
+            int length,
+            bool isLiteral)
+        {
             WriteStartMethodInvocation(context.Host.GeneratedClassContext.BeginContextMethodName);
-            Write(syntaxNode.Start.AbsoluteIndex.ToString(CultureInfo.InvariantCulture));
+            Write(absoluteIndex.ToString(CultureInfo.InvariantCulture));
             WriteParameterSeparator();
-            Write(syntaxNode.Length.ToString(CultureInfo.InvariantCulture));
+            Write(length.ToString(CultureInfo.InvariantCulture));
             WriteParameterSeparator();
             Write(isLiteral ? "true" : "false");
             return WriteEndMethodInvocation();

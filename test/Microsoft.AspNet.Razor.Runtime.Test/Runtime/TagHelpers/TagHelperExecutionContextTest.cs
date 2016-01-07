@@ -83,8 +83,8 @@ namespace Microsoft.AspNet.Razor.Runtime.TagHelpers
             var content2 = await executionContext.GetChildContentAsync(useCachedResult: true);
 
             // Assert
-            Assert.Equal(expectedContent, content1.GetContent(new CommonTestEncoder()));
-            Assert.Equal(expectedContent, content2.GetContent(new CommonTestEncoder()));
+            Assert.Equal(expectedContent, content1.GetContent(new HtmlTestEncoder()));
+            Assert.Equal(expectedContent, content2.GetContent(new HtmlTestEncoder()));
         }
 
         [Fact]
@@ -140,35 +140,7 @@ namespace Microsoft.AspNet.Razor.Runtime.TagHelpers
             Assert.NotSame(content1, content2);
 
             var content3 = await executionContext.GetChildContentAsync(useCachedResult);
-            Assert.Empty(content3.GetContent(new CommonTestEncoder()));
-        }
-
-        [Fact]
-        public async Task ExecuteChildContentAsync_IsNotMemoized()
-        {
-            // Arrange
-            var childContentExecutionCount = 0;
-            var executionContext = new TagHelperExecutionContext(
-                "p",
-                tagMode: TagMode.StartTagAndEndTag,
-                items: new Dictionary<object, object>(),
-                uniqueId: string.Empty,
-                executeChildContentAsync: () =>
-                {
-                    childContentExecutionCount++;
-
-                    return Task.FromResult(result: true);
-                },
-                startTagHelperWritingScope: () => { },
-                endTagHelperWritingScope: () => new DefaultTagHelperContent());
-
-            // Act
-            await executionContext.ExecuteChildContentAsync();
-            await executionContext.ExecuteChildContentAsync();
-            await executionContext.ExecuteChildContentAsync();
-
-            // Assert
-            Assert.Equal(3, childContentExecutionCount);
+            Assert.Empty(content3.GetContent(new HtmlTestEncoder()));
         }
 
         public static TheoryData<string, string> DictionaryCaseTestingData

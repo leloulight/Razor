@@ -29,14 +29,15 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             MarkAsHtmlEncodedMethodName = "Html.Raw";
             StartTagHelperWritingScopeMethodName = "StartTagHelperWritingScope";
             EndTagHelperWritingScopeMethodName = "EndTagHelperWritingScope";
-            RunnerTypeName = "TagHelperRunner";
-            ScopeManagerTypeName = "TagHelperScopeManager";
-            ExecutionContextTypeName = "TagHelperExecutionContext";
-            TagHelperContentTypeName = "TagHelperContent";
-            WriteTagHelperAsyncMethodName = "WriteTagHelperAsync";
-            WriteTagHelperToAsyncMethodName = "WriteTagHelperToAsync";
+            RunnerTypeName = "Microsoft.AspNet.Razor.Runtime.TagHelperRunner";
+            ScopeManagerTypeName = "Microsoft.AspNet.Razor.Runtime.TagHelperScopeManager";
+            ExecutionContextTypeName = "Microsoft.AspNet.Razor.Runtime.TagHelperExecutionContext";
+            TagHelperContentTypeName = "Microsoft.AspNet.Razor.TagHelperContent";
             TagHelperContentGetContentMethodName = "GetContent";
             HtmlEncoderPropertyName = "HtmlEncoder";
+            TagHelperOutputIsContentModifiedPropertyName = "IsContentModified";
+            TagHelperOutputContentPropertyName = "Content";
+            TagHelperOutputGetChildContentAsyncMethodName = "GetChildContentAsync";
         }
 
         /// <summary>
@@ -124,7 +125,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
         public string ExecutionContextAddMethodName { get; set; }
 
         /// <summary>
-        /// The property accessor for the tag helper's output.
+        /// The property name for the tag helper's output.
         /// </summary>
         public string ExecutionContextOutputPropertyName { get; set; }
 
@@ -186,18 +187,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
         public string TagHelperContentTypeName { get; set; }
 
         /// <summary>
-        /// The name of the method used to write <see cref="ExecutionContextTypeName"/>.
-        /// </summary>
-        public string WriteTagHelperAsyncMethodName { get; set; }
-
-        /// <summary>
-        /// The name of the method used to write <see cref="ExecutionContextTypeName"/> to a specified
-        /// <see cref="System.IO.TextWriter"/>.
-        /// </summary>
-        public string WriteTagHelperToAsyncMethodName { get; set; }
-
-        /// <summary>
-        /// The name of the property containing the <c>IHtmlEncoder</c>.
+        /// The name of the property containing the <c>HtmlEncoder</c>.
         /// </summary>
         public string HtmlEncoderPropertyName { get; set; }
 
@@ -205,5 +195,21 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
         /// The name of the method used to convert a <c>TagHelperContent</c> into a <see cref="string"/>.
         /// </summary>
         public string TagHelperContentGetContentMethodName { get; set; }
+
+        /// <summary>
+        /// The name of the property used to indicate the tag helper's content has been modified.
+        /// </summary>
+        public string TagHelperOutputIsContentModifiedPropertyName { get; set; }
+
+        /// <summary>
+        /// The name of the property for the tag helper's output content.
+        /// </summary>
+        public string TagHelperOutputContentPropertyName { get; set; }
+
+        /// <summary>
+        /// The name of the method on the property <see cref="ExecutionContextOutputPropertyName"/> used to retrieve
+        /// tag helper child content.
+        /// </summary>
+        public string TagHelperOutputGetChildContentAsyncMethodName { get; set; }
     }
 }

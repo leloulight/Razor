@@ -4,8 +4,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Internal;
 
 namespace Microsoft.AspNet.Razor.TagHelpers
 {
@@ -18,6 +16,13 @@ namespace Microsoft.AspNet.Razor.TagHelpers
     public class ReadOnlyTagHelperAttributeList<TAttribute> : IReadOnlyList<TAttribute>
         where TAttribute : IReadOnlyTagHelperAttribute
     {
+        private static readonly IReadOnlyList<TAttribute> EmptyList =
+#if NET451
+            new TAttribute[0];
+#else
+            Array.Empty<TAttribute>();
+#endif
+
         /// <summary>
         /// Instantiates a new instance of <see cref="ReadOnlyTagHelperAttributeList{TAttribute}"/> with an empty
         /// collection.
@@ -50,13 +55,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         protected List<TAttribute> Attributes { get; }
 
         /// <inheritdoc />
-        public TAttribute this[int index]
-        {
-            get
-            {
-                return Attributes[index];
-            }
-        }
+        public TAttribute this[int index] => Attributes[index];
 
         /// <summary>
         /// Gets the first <typeparamref name="TAttribute"/> with <see cref="IReadOnlyTagHelperAttribute.Name"/>
@@ -78,18 +77,21 @@ namespace Microsoft.AspNet.Razor.TagHelpers
                     throw new ArgumentNullException(nameof(name));
                 }
 
-                return Attributes.FirstOrDefault(attribute => NameEquals(name, attribute));
+                // Perf: Avoid allocating enumerator
+                for (var i = 0; i < Attributes.Count; i++)
+                {
+                    if (NameEquals(name, Attributes[i]))
+                    {
+                        return Attributes[i];
+                    }
+                }
+
+                return default(TAttribute);
             }
         }
 
         /// <inheritdoc />
-        public int Count
-        {
-            get
-            {
-                return Attributes.Count;
-            }
-        }
+        public int Count => Attributes.Count;
 
         /// <summary>
         /// Determines whether a <typeparamref name="TAttribute"/> matching <paramref name="item"/> exists in the
@@ -131,7 +133,16 @@ namespace Microsoft.AspNet.Razor.TagHelpers
                 throw new ArgumentNullException(nameof(name));
             }
 
-            return Attributes.Any(attribute => NameEquals(name, attribute));
+            // Perf: Avoid allocating enumerator
+            for (var i = 0; i < Attributes.Count; i++)
+            {
+                if (NameEquals(name, Attributes[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -173,7 +184,7 @@ namespace Microsoft.AspNet.Razor.TagHelpers
                 throw new ArgumentNullException(nameof(name));
             }
 
-            attribute = Attributes.FirstOrDefault(attr => NameEquals(name, attr));
+            attribute = this[name];
 
             return attribute != null;
         }
@@ -185,21 +196,34 @@ namespace Microsoft.AspNet.Razor.TagHelpers
         /// <param name="name">The <see cref="IReadOnlyTagHelperAttribute.Name"/> of the
         /// <typeparamref name="TAttribute"/>s to get.</param>
         /// <param name="attributes">When this method returns, the <typeparamref name="TAttribute"/>s with
-        /// <see cref="IReadOnlyTagHelperAttribute.Name"/> matching <paramref name="name"/>, if at least one is
-        /// found; otherwise, <c>null</c>.</param>
+        /// <see cref="IReadOnlyTagHelperAttribute.Name"/> matching <paramref name="name"/>.</param>
         /// <returns><c>true</c> if at least one <typeparamref name="TAttribute"/> with the same
         /// <see cref="IReadOnlyTagHelperAttribute.Name"/> exists in the collection; otherwise, <c>false</c>.</returns>
         /// <remarks><paramref name="name"/> is compared case-insensitively.</remarks>
-        public bool TryGetAttributes(string name, out IEnumerable<TAttribute> attributes)
+        public bool TryGetAttributes(string name, out IReadOnlyList<TAttribute> attributes)
         {
             if (name == null)
             {
                 throw new ArgumentNullException(nameof(name));
             }
 
-            attributes = Attributes.Where(attribute => NameEquals(name, attribute));
+            // Perf: Avoid allocating enumerator
+            List<TAttribute> matchedAttributes = null;
+            for (var i = 0; i < Attributes.Count; i++)
+            {
+                if (NameEquals(name, Attributes[i]))
+                {
+                    if (matchedAttributes == null)
+                    {
+                        matchedAttributes = new List<TAttribute>();
+                    }
 
-            return attributes.Any();
+                    matchedAttributes.Add(Attributes[i]);
+                }
+            }
+            attributes = matchedAttributes ?? EmptyList;
+
+            return matchedAttributes != null;
         }
 
         /// <inheritdoc />

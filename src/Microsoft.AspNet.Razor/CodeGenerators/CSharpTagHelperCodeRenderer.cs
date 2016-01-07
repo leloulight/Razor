@@ -93,7 +93,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             if (!_designTimeMode)
             {
                 RenderRunTagHelpers();
-                RenderWriteTagHelperMethodCall(chunk);
+                RenderTagHelperOutput(chunk);
                 RenderEndTagHelpersScope();
             }
         }
@@ -125,7 +125,8 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             // per call site, e.g. if the tag is on the view twice, there should be two IDs.
             _writer.WriteStringLiteral(tagName)
                    .WriteParameterSeparator()
-                   .Write(nameof(TagMode))
+                   .Write("global::")
+                   .Write(typeof(TagMode).FullName)
                    .Write(".")
                    .Write(tagMode.ToString())
                    .WriteParameterSeparator()
@@ -178,8 +179,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
 
                 // Create the tag helper
                 _writer.WriteStartAssignment(tagHelperVariableName)
-                       .WriteStartMethodInvocation(_tagHelperContext.CreateTagHelperMethodName,
-                                                   tagHelperDescriptor.TypeName)
+                       .WriteStartMethodInvocation(
+                            _tagHelperContext.CreateTagHelperMethodName,
+                            "global::" + tagHelperDescriptor.TypeName)
                        .WriteEndMethodInvocation();
 
                 // Execution contexts and throwing errors for null dictionary properties are a runtime feature.
@@ -395,7 +397,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                 // statement together and the #line pragma correct to make debugging possible.
                 using (var lineMapper = new CSharpLineMappingWriter(
                     _writer,
-                    attributeValueChunk.Association.Start,
+                    attributeValueChunk.Start,
                     _context.SourceFile))
                 {
                     // Place the assignment LHS to align RHS with original attribute value's indentation.
@@ -413,9 +415,9 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                     _writer.WriteStartAssignment(valueAccessor);
                     lineMapper.MarkLineMappingStart();
 
-                    // Write out bare expression for this attribute value. Property is not a string.
+                    // Write out code expression for this attribute value. Property is not a string.
                     // So quoting or buffering are not helpful.
-                    RenderRawAttributeValue(attributeValueChunk, attributeDescriptor, isPlainTextValue);
+                    RenderCodeAttributeValue(attributeValueChunk, attributeDescriptor, isPlainTextValue);
 
                     // End the assignment to the attribute.
                     lineMapper.MarkLineMappingEnd();
@@ -531,26 +533,50 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                                                   _tagHelperContext.ScopeManagerEndMethodName);
         }
 
-        private void RenderWriteTagHelperMethodCall(TagHelperChunk chunk)
+        private void RenderTagHelperOutput(TagHelperChunk chunk)
         {
+            var tagHelperOutputAccessor =
+                $"{ExecutionContextVariableName}.{_tagHelperContext.ExecutionContextOutputPropertyName}";
+
+            if (ContainsChildContent(chunk.Children))
+            {
+                _writer
+                    .Write("if (!")
+                    .Write(tagHelperOutputAccessor)
+                    .Write(".")
+                    .Write(_tagHelperContext.TagHelperOutputIsContentModifiedPropertyName)
+                    .WriteLine(")");
+
+                using (_writer.BuildScope())
+                {
+                    _writer
+                        .Write(tagHelperOutputAccessor)
+                        .Write(".")
+                        .WriteStartAssignment(_tagHelperContext.TagHelperOutputContentPropertyName)
+                        .Write("await ")
+                        .WriteInstanceMethodInvocation(
+                            tagHelperOutputAccessor,
+                            _tagHelperContext.TagHelperOutputGetChildContentAsyncMethodName);
+                }
+            }
+
             _writer
-                .WriteStartInstrumentationContext(_context, chunk.Association, isLiteral: false)
-                .Write("await ");
+                .WriteStartInstrumentationContext(_context, chunk.Association, isLiteral: false);
 
             if (!string.IsNullOrEmpty(_context.TargetWriterName))
             {
                 _writer
-                    .WriteStartMethodInvocation(_tagHelperContext.WriteTagHelperToAsyncMethodName)
+                    .WriteStartMethodInvocation(_context.Host.GeneratedClassContext.WriteToMethodName)
                     .Write(_context.TargetWriterName)
                     .WriteParameterSeparator();
             }
             else
             {
-                _writer.WriteStartMethodInvocation(_tagHelperContext.WriteTagHelperAsyncMethodName);
+                _writer.WriteStartMethodInvocation(_context.Host.GeneratedClassContext.WriteMethodName);
             }
 
             _writer
-                .Write(ExecutionContextVariableName)
+                .Write(tagHelperOutputAccessor)
                 .WriteEndMethodInvocation()
                 .WriteEndInstrumentationContext(_context);
         }
@@ -580,7 +606,7 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                 complexValue: false);
         }
 
-        private void RenderRawAttributeValue(
+        private void RenderCodeAttributeValue(
             Chunk attributeValueChunk,
             TagHelperAttributeDescriptor attributeDescriptor,
             bool isPlainTextValue)
@@ -589,6 +615,12 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                 attributeDescriptor,
                 valueRenderer: (writer) =>
                 {
+                    if (attributeDescriptor.IsEnum && isPlainTextValue)
+                    {
+                        writer.Write(attributeDescriptor.TypeName)
+                            .Write(".");
+                    }
+
                     var visitor =
                         new CSharpTagHelperAttributeValueVisitor(writer, _context, attributeDescriptor.TypeName);
                     visitor.Accept(attributeValueChunk);
@@ -680,6 +712,24 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
             }
         }
 
+        private static bool ContainsChildContent(IList<Chunk> children)
+        {
+            // False will be returned if there are no children or if there are only non-TagHelper ParentChunk leaf
+            // nodes.
+            foreach (var child in children)
+            {
+                var parentChunk = child as ParentChunk;
+                if (parentChunk == null ||
+                    parentChunk is TagHelperChunk ||
+                    ContainsChildContent(parentChunk.Children))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool IsDynamicAttributeValue(Chunk attributeValueChunk)
         {
             var parentChunk = attributeValueChunk as ParentChunk;
@@ -702,16 +752,21 @@ namespace Microsoft.AspNet.Razor.CodeGenerators
                 return false;
             }
 
-            var literalChildChunk = parentChunk.Children[0] as LiteralChunk;
-
-            if (literalChildChunk == null)
+            LiteralChunk literalChildChunk;
+            if ((literalChildChunk = parentChunk.Children[0] as LiteralChunk) != null)
             {
-                return false;
+                plainText = literalChildChunk.Text;
+                return true;
             }
 
-            plainText = literalChildChunk.Text;
+            ParentLiteralChunk parentLiteralChunk;
+            if ((parentLiteralChunk = parentChunk.Children[0] as ParentLiteralChunk) != null)
+            {
+                plainText = parentLiteralChunk.GetText();
+                return true;
+            }
 
-            return true;
+            return false;
         }
 
         // A CSharpCodeVisitor which does not HTML encode values. Used when rendering bound string attribute values.

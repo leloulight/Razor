@@ -335,15 +335,14 @@ namespace Microsoft.AspNet.Razor.Test.Framework
         public SpanConstructor AsAddTagHelper(string lookupText)
         {
             return _self
-                .With(
-                    new AddOrRemoveTagHelperChunkGenerator(removeTagHelperDescriptors: false, lookupText: lookupText))
+                .With(new AddTagHelperChunkGenerator(lookupText))
                 .Accepts(AcceptedCharacters.AnyExceptNewline);
         }
 
         public SpanConstructor AsRemoveTagHelper(string lookupText)
         {
             return _self
-                .With(new AddOrRemoveTagHelperChunkGenerator(removeTagHelperDescriptors: true, lookupText: lookupText))
+                .With(new RemoveTagHelperChunkGenerator(lookupText))
                 .Accepts(AcceptedCharacters.AnyExceptNewline);
         }
 
